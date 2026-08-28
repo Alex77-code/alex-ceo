@@ -1,0 +1,194 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL", "file:./dev.db")
+}
+
+model User {
+  id         String   @id @default(cuid())
+  email      String   @unique
+  name       String?
+  password   String
+  role       Role     @relation(fields: [roleId], references: [id])
+  roleId     String
+  createdAt  DateTime @default(now())
+  sessions   Session[]
+  activities AuditLog[] @relation("user_activities")
+}
+
+model Role {
+  id    String @id @default(cuid())
+  name  String @unique
+  users User[]
+}
+
+model Department {
+  id    String @id @default(cuid())
+  key   String @unique
+  name  String
+  agents Agent[]
+}
+
+model Agent {
+  id           String @id @default(cuid())
+  key          String @unique
+  name         String
+  department   Department @relation(fields: [departmentId], references: [id])
+  departmentId String
+}
+
+model Client {
+  id       String @id @default(cuid())
+  name     String
+  status   String
+  contacts Contact[]
+}
+
+model Lead {
+  id          String @id @default(cuid())
+  name        String
+  source      String
+  value       Float   @default(0)
+  status      String
+  createdAt   DateTime @default(now())
+}
+
+model Contact {
+  id      String @id @default(cuid())
+  name    String
+  email   String
+  phone   String?
+  client  Client? @relation(fields: [clientId], references: [id])
+  clientId String?
+}
+
+model Project {
+  id        String @id @default(cuid())
+  name      String
+  status    String
+  deadline  DateTime?
+  tasks     Task[]
+}
+
+model Task {
+  id          String @id @default(cuid())
+  title       String
+  description String?
+  status      String
+  priority    Int
+  dueDate     DateTime?
+  project     Project? @relation(fields: [projectId], references: [id])
+  projectId   String?
+  assigneeId  String?
+}
+
+model Campaign {
+  id          String @id @default(cuid())
+  name        String
+  status      String
+  startDate   DateTime?
+  endDate     DateTime?
+}
+
+model Invoice {
+  id        String @id @default(cuid())
+  clientId  String
+  amount    Float
+  dueDate   DateTime?
+  status    String
+}
+
+model Expense {
+  id       String @id @default(cuid())
+  amount   Float
+  category String
+  date     DateTime @default(now())
+}
+
+model Payment {
+  id         String @id @default(cuid())
+  invoiceId  String
+  amount     Float
+  date       DateTime @default(now())
+}
+
+model FinancialRecord {
+  id     String @id @default(cuid())
+  type   String
+  amount Float
+  date   DateTime @default(now())
+}
+
+model Approval {
+  id          String @id @default(cuid())
+  action      String
+  payload     Json
+  level       ApprovalLevel
+  status      ApprovalStatus @default(PENDING)
+  requestedBy String
+  requestedAt DateTime @default(now())
+  reviewedBy  String?
+  reviewedAt  DateTime?
+}
+
+enum ApprovalLevel {
+  SAFE
+  REVIEW
+  CRITICAL
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Notification {
+  id      String @id @default(cuid())
+  userId  String?
+  message String
+  read    Boolean @default(false)
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id           String @id @default(cuid())
+  userId       String?
+  agentKey     String?
+  department   String?
+  action       String
+  timestamp    DateTime @default(now())
+  status       String
+  approvalReq  Boolean @default(false)
+  result       String?
+}
+
+model Integration {
+  id    String @id @default(cuid())
+  name  String
+  key   String @unique
+  meta  Json?
+}
+
+model Setting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+}
+
+model KPI {
+  id    String @id @default(cuid())
+  key   String @unique
+  name  String
+  value Float
+}
+
+model Session {
+  id        String @id @default(cuid())
+  userId    String
+  token     String
+  createdAt DateTime @default(now())
+}
